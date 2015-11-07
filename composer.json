@@ -2,7 +2,7 @@
 	"name": "alexsawallich/zend-google-geocoder",
 	"description": "A Zend-Framework-Module providing a small service-class to query the Google Geocoder API. Results can optionally be cached to avoid running into the API's query limitations.",
 	"type": "library",
-	"keywords": "google, geocoder, api, zend, module",
+	"keywords": ["google", "geocoder", "api", "zend", "module", "zf"]
 	"homepage": "http://www.alex-sawallich.com",
 	"authors": [
 		{
