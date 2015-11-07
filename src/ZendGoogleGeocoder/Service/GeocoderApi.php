@@ -22,6 +22,13 @@ class GeocoderApi implements GeocoderApiInterface
     protected $defaultFormat = 'json';
 
     /**
+     * Logger-object.
+     *
+     * @var \Zend\Log\LoggerInterface
+     */
+    protected $logger;
+
+    /**
      * Options-object for this module.
      *
      * @var \ZendGoogleGeocoder\Options\GeocoderOptions
@@ -41,18 +48,19 @@ class GeocoderApi implements GeocoderApiInterface
     /**
      * Stores the options into the API-Client.
      *
-     * @param \ZendGoogleGeocoder\Options\GeocoderOptions $options            
+     * @param \ZendGoogleGeocoder\Options\GeocoderOptions $options
      */
-    public function __construct(\ZendGoogleGeocoder\Options\GeocoderOptions $options)
+    public function __construct(\ZendGoogleGeocoder\Options\GeocoderOptions $options, \Zend\Log\LoggerInterface $logger)
     {
         $this->options = $options;
+        $this->logger = $logger;
     }
 
     /**
      * Checks the response for errors sent from the Google Geocoder API.
      *
-     * @param string $response            
-     * @param string $format            
+     * @param string $response
+     * @param string $format
      * @throws \Exception
      */
     protected function checkResponse($response, $format)
@@ -62,7 +70,10 @@ class GeocoderApi implements GeocoderApiInterface
                 $json = json_decode($response);
                 $status = $json->status;
                 if ('OK' != $status && 'ZERO_RESULTS' != $status) {
+                    $this->logger->err(sprintf('The Google Geocoder API responded with an error. The status was %s. Refer to the docs to see what that status means.', $status));
                     throw new \Exception(sprintf('The Google Geocoder API responded with an error. The status was %s. Refer to the docs to see what that status means.', $status));
+                } else {
+                    $this->logger->debug('Response OK');
                 }
                 break;
             
@@ -70,7 +81,10 @@ class GeocoderApi implements GeocoderApiInterface
                 $xml = new \SimpleXMLElement($response);
                 $status = current($xml->status);
                 if ('OK' != $status && 'ZERO_RESULTS' != $status) {
+                    $this->logger->err(sprintf('The Google Geocoder API responded with an error. The status was %s. Refer to the docs to see what that status means.', $status));
                     throw new \Exception(sprintf('The Google Geocoder API responded with an error. The status was %s. Refer to the docs to see what that status means.', $status));
+                } else {
+                    $this->logger->debug('Response OK');
                 }
                 break;
         }
@@ -79,8 +93,8 @@ class GeocoderApi implements GeocoderApiInterface
     /**
      * Uses curl to request the api and returns the response.
      *
-     * @param string $url            
-     * @param string $format            
+     * @param string $url
+     * @param string $format
      * @return string
      */
     protected function doCurlRequest($url, $format)
@@ -92,11 +106,13 @@ class GeocoderApi implements GeocoderApiInterface
         if (false === $response) {
             $error = curl_error($curlHandle);
             curl_close($curlHandle);
-            throw new \Exception('CURL-Request failed with the following error: ' . $error, 300);
+            $this->logger->emerg(sprintf('CURL-Request failed with the following error: %s', $error));
+            throw new \Exception(sprintf('CURL-Request failed with the following error: %s', $error), 300);
         }
         
         curl_close($curlHandle);
         
+        $this->logger->debug('Checking response for errors.');
         $this->checkResponse($response, $format);
         
         return $response;
@@ -105,14 +121,15 @@ class GeocoderApi implements GeocoderApiInterface
     /**
      * Requests the given URL by using file_get_contents and returns the response.
      *
-     * @param string $url            
-     * @param string $format            
+     * @param string $url
+     * @param string $format
      * @return string
      */
     protected function doStreamRequest($url, $format)
     {
         $response = file_get_contents($url);
         
+        $this->logger->debug('Checking response for errors.');
         $this->checkResponse($response, $format);
         
         return $response;
@@ -131,13 +148,17 @@ class GeocoderApi implements GeocoderApiInterface
             $format = $this->getDefaultFormat();
         }
         
+        $this->logger->debug(sprintf('Generating URL for requesting the Google Geocoder API with format: %s', $format));
         $url = $this->generateRequestUrl($address, $format);
         
         if (true === $this->hasStreamSupport()) { // Use file_get_contents. It's faster, but not supported by every shared hoster.
+            $this->logger->debug(sprintf('allow_url_fopen is enabled. Using file_get_contents to retrieve response.'));
             return $this->doStreamRequest($url, $format);
         } elseif (true === $this->hasCurlSupport()) { // Use curl. A bit overkill, but works fine.
+            $this->logger->debug(sprintf('Using cURL to retrieve response.'));
             return $this->doCurlRequest($url, $format);
         } else {
+            $this->logger->emerg('Unable to fire a HTTP-Request to the Google Geocoder API, since wether "allow_url_fopen" is enabled nor the mod_curl is installed.');
             throw new \Exception('Unable to fire a HTTP-Request to the Google Geocoder API, since wether "allow_url_fopen" is enabled nor the mod_curl is installed.', 200);
         }
     }
@@ -145,8 +166,8 @@ class GeocoderApi implements GeocoderApiInterface
     /**
      * Generates the request url for querying the Google Geocoder API.
      *
-     * @param string $address            
-     * @param string $format            
+     * @param string $address
+     * @param string $format
      * @return string
      */
     protected function generateRequestUrl($address, $format)
@@ -166,6 +187,12 @@ class GeocoderApi implements GeocoderApiInterface
         $queryString = http_build_query($queryParams);
         
         $url .= '?' . $queryString;
+        
+        if (true === isset($queryParams['key'])) {
+            $queryParams['key'] = mb_substr($key, 0, 2) . str_repeat('x', strlen($key) - 4) . mb_substr($key, - 2);
+            $queryString = http_build_query($queryParams);
+        }
+        $this->logger->debug(sprintf('Generated url: %s.', self::GEOCODER_API_URI . '?' . $queryString));
         
         return $url;
     }
@@ -208,7 +235,7 @@ class GeocoderApi implements GeocoderApiInterface
     /**
      * Checks if the given format is within the valid-format-whitelist.
      *
-     * @param string $format            
+     * @param string $format
      * @throws \InvalidArgumentException
      * @return void
      */
