@@ -22,6 +22,13 @@ class GeocoderApi implements GeocoderApiInterface
     protected $defaultFormat = 'json';
 
     /**
+     * Options-object for this module.
+     *
+     * @var \ZendGoogleGeocoder\Options\GeocoderOptions
+     */
+    protected $options;
+
+    /**
      * Valid return-formats.
      *
      * @var array
@@ -30,6 +37,16 @@ class GeocoderApi implements GeocoderApiInterface
         'json',
         'xml'
     ];
+
+    /**
+     * Stores the options into the API-Client.
+     *
+     * @param \ZendGoogleGeocoder\Options\GeocoderOptions $options            
+     */
+    public function __construct(\ZendGoogleGeocoder\Options\GeocoderOptions $options)
+    {
+        $this->options = $options;
+    }
 
     /**
      * Uses curl to request the api and returns the response.
@@ -65,13 +82,9 @@ class GeocoderApi implements GeocoderApiInterface
     }
 
     /**
-     * Sends a HTTP-Request to the Google Geocoder API to geocode the given address and returns the result.
+     * (non-PHPdoc)
      *
-     * @param string $address
-     *            The address as string {@see https://developers.google.com/maps/documentation/geocoding/intro#geocoding}
-     * @param string $format
-     *            Can be "json" or "xml" {@see https://developers.google.com/maps/documentation/geocoding/intro#GeocodingRequests}
-     * @throws \Exception
+     * @see \ZendGoogleGeocoder\Service\GeocoderApiInterface::fetchGeoDataForAddress()
      */
     public function fetchGeoDataForAddress($address, $format = null)
     {
@@ -104,9 +117,16 @@ class GeocoderApi implements GeocoderApiInterface
         $url = self::GEOCODER_API_URI;
         $url .= $format;
         
-        $queryString = http_build_query([
+        $queryParams = [
             'address' => $address
-        ]);
+        ];
+        
+        $key = $this->getKey();
+        if (null != $key) {
+            $queryParams['key'] = $key;
+        }
+        
+        $queryString = http_build_query($queryParams);
         
         $url .= '?' . $queryString;
         
@@ -121,6 +141,16 @@ class GeocoderApi implements GeocoderApiInterface
     public function getDefaultFormat()
     {
         return $this->defaultFormat;
+    }
+
+    /**
+     * Returns the API-Key from the options, if set.
+     *
+     * @return string|null
+     */
+    protected function getKey()
+    {
+        return $this->options->getKey();
     }
 
     /**
