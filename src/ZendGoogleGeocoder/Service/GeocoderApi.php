@@ -49,12 +49,41 @@ class GeocoderApi implements GeocoderApiInterface
     }
 
     /**
+     * Checks the response for errors sent from the Google Geocoder API.
+     *
+     * @param string $response            
+     * @param string $format            
+     * @throws \Exception
+     */
+    protected function checkResponse($response, $format)
+    {
+        switch ($format) {
+            case 'json':
+                $json = json_decode($response);
+                $status = $json->status;
+                if ('OK' != $status && 'ZERO_RESULTS' != $status) {
+                    throw new \Exception(sprintf('The Google Geocoder API responded with an error. The status was %s. Refer to the docs to see what that status means.', $status));
+                }
+                break;
+            
+            case 'xml':
+                $xml = new \SimpleXMLElement($response);
+                $status = current($xml->status);
+                if ('OK' != $status && 'ZERO_RESULTS' != $status) {
+                    throw new \Exception(sprintf('The Google Geocoder API responded with an error. The status was %s. Refer to the docs to see what that status means.', $status));
+                }
+                break;
+        }
+    }
+
+    /**
      * Uses curl to request the api and returns the response.
      *
      * @param string $url            
+     * @param string $format            
      * @return string
      */
-    protected function doCurlRequest($url)
+    protected function doCurlRequest($url, $format)
     {
         $curlHandle = curl_init($url);
         curl_setopt($curlHandle, CURLOPT_RETURNTRANSFER, true);
@@ -67,6 +96,9 @@ class GeocoderApi implements GeocoderApiInterface
         }
         
         curl_close($curlHandle);
+        
+        $this->checkResponse($response, $format);
+        
         return $response;
     }
 
@@ -74,11 +106,16 @@ class GeocoderApi implements GeocoderApiInterface
      * Requests the given URL by using file_get_contents and returns the response.
      *
      * @param string $url            
+     * @param string $format            
      * @return string
      */
-    protected function doStreamRequest($url)
+    protected function doStreamRequest($url, $format)
     {
-        return file_get_contents($url);
+        $response = file_get_contents($url);
+        
+        $this->checkResponse($response, $format);
+        
+        return $response;
     }
 
     /**
@@ -97,9 +134,9 @@ class GeocoderApi implements GeocoderApiInterface
         $url = $this->generateRequestUrl($address, $format);
         
         if (true === $this->hasStreamSupport()) { // Use file_get_contents. It's faster, but not supported by every shared hoster.
-            return $this->doStreamRequest($url);
+            return $this->doStreamRequest($url, $format);
         } elseif (true === $this->hasCurlSupport()) { // Use curl. A bit overkill, but works fine.
-            return $this->doCurlRequest($url);
+            return $this->doCurlRequest($url, $format);
         } else {
             throw new \Exception('Unable to fire a HTTP-Request to the Google Geocoder API, since wether "allow_url_fopen" is enabled nor the mod_curl is installed.', 200);
         }
