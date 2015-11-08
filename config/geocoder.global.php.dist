@@ -1,0 +1,11 @@
+<?php
+return [
+    'zend-google-geocoder' => [
+        /**
+         * Your Google Geocoder API-Key.
+         * It's fully optional, but recommended to use.
+         * See {@link https://developers.google.com/maps/documentation/geocoding/get-api-key} for more information.
+         */
+        'key' => ''
+    ]
+];

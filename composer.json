@@ -12,7 +12,12 @@
 			"role": "developer"
 		}
 	],
+	"support": {
+		"wiki": "https://github.com/alexsawallich/ZendGoogleGeocoder/wiki",
+		"issues": "https://github.com/alexsawallich/ZendGoogleGeocoder/issues",
+		"source": "https://github.com/alexsawallich/ZendGoogleGeocoder"
+	},
 	"require": {
-		"php" : ">=5.5"
+		"php": ">=5.5"
 	}
 }

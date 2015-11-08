@@ -4,8 +4,17 @@ namespace ZendGoogleGeocoder\Service;
 use Zend\ServiceManager\ServiceLocatorAwareInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
+/**
+ * Service to geocode addresses with Google's Geocoding API.
+ */
 class GeocoderService implements GeocoderApiAwareInterface, ServiceLocatorAwareInterface
 {
+
+    /**
+     *
+     * @var \Zend\Log\LoggerInterface
+     */
+    protected $logger;
 
     /**
      *
@@ -45,9 +54,14 @@ class GeocoderService implements GeocoderApiAwareInterface, ServiceLocatorAwareI
      */
     public function geocodeAddress($address, $format = null)
     {
+        $cacheKey = md5($address);
+        $this->getLogger()->info(sprintf('Requested to geocode address "%s". Generated Cache-Key is %s', $address, $cacheKey));
+        
         if (false) {
             // @todo Retrieve from cache
+            $this->getLogger()->info('Response could be served from cache.');
         } else {
+            $this->getLogger()->info('Response could not be found in cache. Using the Google API to retrieve response.');
             return $this->getGeocoderApi()->fetchGeoDataForAddress($address, $format);
         }
     }
@@ -67,6 +81,20 @@ class GeocoderService implements GeocoderApiAwareInterface, ServiceLocatorAwareI
         }
         
         return $this->geocoderApi;
+    }
+
+    /**
+     * Returns the logger-object from the service-locator.
+     *
+     * @return \Zend\Log\LoggerInterface
+     */
+    public function getLogger()
+    {
+        if (null === $this->logger) {
+            $this->logger = $this->getServiceLocator()->get('ZendGoogleGeocoderLogger');
+        }
+        
+        return $this->logger;
     }
 
     /**
