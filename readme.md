@@ -14,12 +14,14 @@ To avoid running into quota-limits the responses from Google's API are being cac
 ## Usage Example
 *More examples can be found in the [Wiki](https://github.com/alexsawallich/ZendGoogleGeocoder/wiki).*
 
-	// For example in an action-method
-	$address = $this->getRequest()->getPost('address');
-	$geocoderService = $this->getServiceLocator()->get('ZendGoogleGeocoderService');
-	$response = $geocoderService->geocodeAddress($address, $format = 'xml');
-	
-	// Do something with the response here...
+```php
+// For example in an action-method
+$address = $this->getRequest()->getPost('address');
+$geocoderService = $this->getServiceLocator()->get('ZendGoogleGeocoderService');
+$response = $geocoderService->geocodeAddress($address, $format = 'xml');
+
+// Do something with the response here...
+```
 
 # Installation
 
@@ -62,11 +64,13 @@ and put the extracted folder into your `vendor` or `modules`-directory.
 
 After you've got the files you need to enable the module in your `application.config.php`-file.
 
-	// application.config.php
-	return array(
-		'modules' => array(
-			'ZendGoogleGeocoder'
-	// ...
+```php
+// application.config.php
+return array(
+	'modules' => array(
+		'ZendGoogleGeocoder'
+// ...
+```
 
 Now head into the ZendGoogleGeocoder-directory and copy `config/geocoder.global.php.dist` to `root-of-your-project/config/geocoder.global.php`. Open the file
 and configure the available options to your needs.
