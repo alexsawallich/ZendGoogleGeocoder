@@ -77,6 +77,14 @@ and configure the available options to your needs.
 
 Now you should be able to use the module.
 
+# Features / Todo / Roadmap
+- Possibility to query the Google Geocoder API [DONE]
+- Option to provide an API-Key for usage in the API requests [DONE]
+- Query API by providing an address [DONE]
+- Query API by providing components (defined by Google's API) [INCOMPLETE]
+- Possibility for detailed logging [DONE]
+- Possibility to cache the requests to avoid running into quota limits [INCOMPLETE]
+
 # Notice concerning Google's TOS
 If you read the docs of the Google Geocoding API you will find the following ([Source](https://developers.google.com/maps/documentation/geocoding/usage-limits#terms-of-use-restrictions)):
 > The Google Maps Geocoding API may only be used in conjunction with a Google map; geocoding results without displaying them on a map is prohibited. For complete details on allowed usage, consult the Maps API Terms of Service License Restrictions.
