@@ -19,5 +19,10 @@
 	},
 	"require": {
 		"php": ">=5.5"
-	}
+	},
+	"autoload": {
+        "psr-0": {
+            "ZendGoogleGeocoder": "src/"
+        }
+    }
 }
