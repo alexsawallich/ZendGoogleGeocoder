@@ -25,6 +25,7 @@
             "ZendGoogleGeocoder\\": "src/"
         },
         "classmap": [
+        	"",
         	"src/"
         ]
     }
